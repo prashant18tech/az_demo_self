@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/your/repo.git', branch: 'main'
+                git url: 'https://github.com/prashant18tech/az_demo_self/repo.git', branch: 'main'
             }
         }
 
