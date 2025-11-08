@@ -1,61 +1,48 @@
 pipeline {
     agent any
 
-    stages {
+    environment {
+        ARM_CLIENT_ID       = credentials('AZURE_CLIENT_ID')
+        ARM_CLIENT_SECRET    = credentials('AZURE_CLIENT_SECRET')
+        ARM_TENANT_ID        = credentials('AZURE_TENANT_ID')
+        ARM_SUBSCRIPTION_ID  = credentials('AZURE_SUBSCRIPTION_ID')
+    }
 
+    stages {
         stage('Checkout') {
             steps {
-                echo "📦 Checking out source code..."
-                checkout scm
+                git 'https://github.com/<your-username>/<your-repo>.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'TF_VAR_azure_subscription_id'),
-                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'TF_VAR_azure_client_id'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'TF_VAR_azure_client_secret'),
-                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'TF_VAR_azure_tenant_id')
-                ]) {
-                    sh 'terraform init'
-                }
+                sh 'terraform init'
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'TF_VAR_azure_subscription_id'),
-                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'TF_VAR_azure_client_id'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'TF_VAR_azure_client_secret'),
-                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'TF_VAR_azure_tenant_id')
-                ]) {
-                    sh 'terraform plan -out=tfplan'
-                }
+                sh '''
+                terraform plan \
+                  -var subscription_id=$ARM_SUBSCRIPTION_ID \
+                  -var client_id=$ARM_CLIENT_ID \
+                  -var client_secret=$ARM_CLIENT_SECRET \
+                  -var tenant_id=$ARM_TENANT_ID
+                '''
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'TF_VAR_azure_subscription_id'),
-                    string(credentialsId: 'AZURE_CLIENT_ID', variable: 'TF_VAR_azure_client_id'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'TF_VAR_azure_client_secret'),
-                    string(credentialsId: 'AZURE_TENANT_ID', variable: 'TF_VAR_azure_tenant_id')
-                ]) {
-                    sh 'terraform apply -auto-approve tfplan'
-                }
+                sh '''
+                terraform apply -auto-approve \
+                  -var subscription_id=$ARM_SUBSCRIPTION_ID \
+                  -var client_id=$ARM_CLIENT_ID \
+                  -var client_secret=$ARM_CLIENT_SECRET \
+                  -var tenant_id=$ARM_TENANT_ID
+                '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Resource group created successfully!"
-        }
-        failure {
-            echo "❌ Terraform pipeline failed. Check the logs."
         }
     }
 }
