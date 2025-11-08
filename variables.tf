@@ -20,19 +20,13 @@ variable "azure_tenant_id" {
 }
 
 variable "resource_group_name" {
-  description = "Name of the Resource Group to create"
+  description = "Name of the Resource Group"
   type        = string
   default     = "rg-demo-jenkins"
 }
 
 variable "location" {
-  description = "Azure region for Resource Group"
+  description = "Azure region where RG will be created"
   type        = string
   default     = "East US"
-}
-
-variable "environment" {
-  description = "Environment tag"
-  type        = string
-  default     = "Dev"
 }
